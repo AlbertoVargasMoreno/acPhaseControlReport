@@ -1,0 +1,151 @@
+\subsection{Cruce por cero}
+
+    Para encender los ledes infrarrojos del H11AA1 hay que satisfacer los requisitos especificados en su hoja de datos. Para superar el valor mínimo de $I_F$min = 10mA.
+    
+    \begin{equation}
+        R_{zc}max
+        =   \frac{ V_{R_{zc}} }{ I_{F}min }
+        =   \frac{ V_{p} - V_{F} }{ I_{F}min }
+        =   \frac{ 120 \sqrt{2}V - 1.2V }{ 10mA }
+        =   16.8505 k\Omega
+    \end{equation}
+    
+    \begin{equation}
+        R_{zc}min
+        =   \frac{ V_{R_{zc}} }{ I_{F}max }
+        =   \frac{ V_{p} - V_{F} }{ I_{F}max }
+        =   \frac{ 120 \sqrt{2}V - 1.2V }{ 50mA }
+        =   3.3 k\Omega
+    \end{equation}
+    
+    Se elige un valor cercano al valor máximo de resistencia para optimizar protección y vida útil del Led emisor.\\
+    
+    La potencia disipada por la resistencia limitadora está dada por:
+    
+    \begin{equation}
+        P_{R_{zc}}   
+        =   ( R_{zc} )( I_F )^2 
+        =   (  16.5K\Omega )( 10mA )  
+        =   1.65W
+    \end{equation}
+    
+    En valores éstandar, 16k$\Omega$ para 2 W, sería lo ideal. Pero la variedad de valores de resistencia de potencia es restringida, como solución se propone un arreglo de resistencias. Con un arreglo paralelo de dos resistencias con valor éstandar de 33k se obtiene un valor resultante de 16.5k$\Omega$; disipando cada una 0.8425W.\\
+
+\subsection{Disparo del Triac y el optoacoplador que le controla}
+    La interfaz para el triac de potencia BTA16 es el MOC3011. Tiene una corriente de activación para el LED $I_{FT}$ de 10 mA y un voltaje de estado apagado en las terminales de salida $V_{DRM}$ de 250 V.\\
+    
+    Se elige un valor para $I_{FT}$ suficiente para activar y mandar la señal de activación al triac BTA16 correctamente, se eligió un valor de 15 mA.\\
+    
+    Un transistor NPN 2N2222 es la interfaz entre el pin de salida del microcontrolador y la entrada del optoacoplador MOC3011; en base a su hoja de datos:
+    
+    $V_F$ = 1.5V, $I_{FT}$ = 15mA del MOC3011;  $V_{CE(sat)}$ = 0.3V del NPN 2N2222
+    
+    \begin{equation}
+        R_{C}min 
+        =   \frac { V_{CC} - V_{F} - V_{CE(sat)} } { I_{FT} }
+        =   \frac { 5V - 1.5V - 0.3V } { 15mA }
+        =   213.33\Omega
+    \end{equation}
+     
+    \begin{equation}
+        P_{ R_{C} }
+        =   R_{C} \cdot {I_{F}}^2
+        =   (213.33\Omega) \cdot (15mA)^2
+        =   47.9992mW
+    \end{equation}
+    
+    \begin{center}
+        Un valor éstandar de 330 ohm con tolerancia de 10\%, a 1/4 W es suficiente.\\
+    \end{center}
+
+    \begin{equation}
+        I_{B}   
+        =   \frac { I_{C} } { hFE }
+        =   \frac { 15mA } { 10 }
+        =   1.5mA
+    \end{equation}
+
+    \begin{equation}
+        R_{B}min   
+        =   \frac { Vout - V_{BE(sat)} } { I_{B} }
+        =   \frac { 3.3V - 0.6V } { 1.5mA }
+        =   1.8k\Omega
+    \end{equation}
+    
+    \begin{equation}
+        P_{R_{B}}
+        =   R_{B} \cdot {I_{B}}^2
+        =   (1.4k\Omega) \cdot (1.5mA)^2
+        =   3.15mW
+    \end{equation}
+    
+    \begin{center}
+        Se eligió valor de 2.7K ohm con una tolerancia de 10\%, a 1/4 W.\\
+    \end{center}
+    
+    \subsubsection*{Resistencia Limitadora de corriente para la compuerta}
+        Esta resistencia limita la corriente pico que circula a través de la salida del optoacoplador. Su valor mínimo se calcula así:
+
+        \begin{equation}
+            R_{ }min   
+            =   \frac { V_{pk}max } { I_{max} }    
+            =   \frac { 170V } { 1.2A } \approx 150\Omega
+        \end{equation}
+        
+        Por lo que se elige una resistencia, con valor éstandar, de 180 ohm para la resistencia limitadora.
+        
+    \subsubsection*{Disipación de potencia del TRIAC}
+    Calcular la máxima salida de potencia (carga máxima) es una de las tareas más importantes en este diseño, y la capacidad de potencia depende principalmente del TRIAC que se usa. La capacidad actual del TRIAC limita la máxima salida de potencia.\\
+    
+    El BTA16-600V es un triac de 16 A. El triac es de tipo snubberless, por tanto no se necesitara ningún circuito de amortiguación como protección. Además de que la carga es resistiva. 
+    
+        \subsubsection*{Córriente en la carga}
+        La potencia máxima de salida en la aplicación ( 800W ), por lo que el flujo de coriene RMS a través del TRIAC para un 800 W es 6.66 A.
+
+            \begin{equation}
+                I   
+                =   \frac{ P_{LOAD} }{ V_{IN} }  
+                =   \frac{800}{120}    
+                =   6.6666 A
+            \end{equation}
+
+        
+\subsection{Ventilador}
+    El ventilador se alimenta a 24 Vdc. Un simple transistor BJT sirve de interfaz entre la salida del microcontrolador a 3.3 V y los 24 V. Se eligió un 2N2222, cuyas características son: $V_{CE(sat)}$ = 0.3 V del NPN 2N2222; y teniendo en cuenta que I$_{C}$ = I$_{fan}$max = 0.25 Amps.
+    
+    \begin{equation}
+        R_{C} 
+        =   \frac { V_{CC} - V_{fan} - V_{CE(sat)} } { I_{fan} }
+        =   \frac { 24V - 24V - 0.3V } { 250 mA }
+        \approx   0 \Omega
+    \end{equation}
+    
+    \begin{center}
+        La caída de voltaje en el ventilador es aproximadamente el total de la fuente de alimentación y la caída de voltaje colector-emisor es despreciable, por tanto no es necesario utilizar una resistencia limitadora de corriente para la carga.\\
+    \end{center}
+    
+    \begin{equation}
+        I_{B}   
+        =   \frac { I_{C} } { hFE }
+        =   \frac { 250mA } { 10 }
+        =   25mA
+    \end{equation}
+
+    \begin{equation}
+        R_{B}   
+        =   \frac { Vout - V_{BE(sat)} } { I_{B} }
+        =   \frac { 3.3V - 0.6V } { 25 mA }
+        =   1.8k\Omega
+    \end{equation}
+    
+    \begin{equation}
+        P_{R_{B}}
+        =   R_{B} \cdot {I_{B}}^2
+        =   (1.4k\Omega) \cdot (1.5mA)^2
+        =   3.15mW
+    \end{equation}
+    
+    \begin{center}
+        Se elige un valor de 2.7K ohm con una tolerancia de 10\%, a 1/4 W.\\
+    \end{center}
+    

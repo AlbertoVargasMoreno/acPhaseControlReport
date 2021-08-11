@@ -1,0 +1,151 @@
+\documentclass{article}
+
+\oddsidemargin 0in
+ \textwidth 6.75in
+ \topmargin 0in
+ \textheight 8.5in
+ \parindent 0em
+ \parskip 2ex
+
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{natbib}
+% %/// librerias necesarias para generar los diagrmas de flujo ///
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,chains}
+% % ///////////////////////////
+\usepackage[most]{tcolorbox}
+
+\renewcommand{\figurename}{Fig.}
+\newcommand{\dgC}{  $^{\circ}$C\ }
+
+\title{Control}
+\author{vargasmorenoalberto }
+\date{November 2019}
+
+\begin{document}
+    
+    % \section{Introducci\'{o}n}
+    % Para controlar la potencia de entrada a la resistencia se utiliza un control de fase.
+
+    \section{Principio de funcionamiento}
+    \label{principio-de-funcionamiento}
+    \textbf{Control por \'angulo de fase}\\
+    El control de potencia en corriente alterna consiste en aplicar a la carga una porci\'on de cada semiciclo de voltaje de l\'inea de manera sim\'etrica; mientras menor es la porci\'on, menor es la potencia transferida a la carga \cite{slp}. Esta porci\'on est\'a en relaci\'on al \'angulo de fase. \\
+    El control de fase es el m\'etodo m\'as com\'un para controlar potencia utilizando tiristores \cite{littelfuse}.\\
+
+        \begin{figure}[htbp]
+            \centering
+            \frame{ \includegraphics[scale=0.5]{images/sineWavePhaseControl.png} }
+            \caption{Onda Senoidal Mostrando principios del control de fase}
+            \label{fig:formaDeOnda}
+        \end{figure}
+        
+    En la  figura \ref{fig:formaDeOnda} se ilustra la forma de onda del voltaje de l\'inea y se muestran t\'erminos com\'unmente utilizados para describir la operaci\'on de los tiristores. El \'angulo de retardo es el tiempo durante el cual el tiristor bloquea el flujo de corriente del voltaje de l\'inea, el \'angulo de conducci\'on es el tiempo durante el cual el tiristor es activado y permite el flujo de corriente a trav\'es de la carga \cite{littelfuse}.\\
+    Despu\'es de un cruce por cero el tiristor es encendido a trav\'es de una se\~nal de control recibida en la compuerta y autom\'aticmente se apaga cuando su corriente llega al valor de 0. Mientras la se\~nal de control no es recibida, el tiristor bloquea todo el flujo de corriente; este comportamiento es el mismo tanto para el semiciclo positivo como para el semiciclo negativo. Solo hay algunas limitaciones para encender el tiristor alrededor del cruce por cero, cuando la corriente no es suficiente, cuando dicha corriente es menor a la corriente de enganche del tiristor, provocando que la potencia de la carga no pueda ser regulada perfectamente de 0 a 100 \% \cite{st}.
+    
+    \section{Ventilador}
+    El sistema de ventilaci\'on tiene dos prop\'ositos: enfriar y distribuir (forzar convecci\'on). Una soluci\'on muy simple puede ser un ventilador corriendo continuamente a toda velocidad. Aunque esta soluci\'on cumple con el prop\'osito, tiene la desventaja de consumir mucha potencia y generar mucho ruido. Un uso m\'as eficiente es ajustar la velocidad del ventilador de acuerdo a las condiciones del sistema. Resultando en un sistema de lazo cerrado, donde el ventilador intenta mantener estable las condiciones del sistema mediante el ajuste de su velocidad.\\
+    
+    \section{Diagrama a bloques del sistema}
+
+        \begin{figure}[h!]
+            \centering
+            \frame{ \includegraphics[scale=0.5]{images/diagramaBloques.png} }
+            \caption{Diagrama de bloques}
+            \label{fig:bloques}
+        \end{figure}
+        
+        \textbf{Control de fase}\\    
+        El elemento principal para realizar el control de fase es el microcontrolador  MSP430G553 que controla al triac.
+        La sincronizaci\'on requerida para encender el triac al mismo tiempo para cada semiciclo es provista por la detecci\'on del cruce por cero.
+        El microcontrolador detecta el cruce por cero despu\'es del final de cada semiciclo de la se\~nal de entrada y ajusta el tiempo de retardo para encender el triac en relaci\'on con el porcentaje de potencia requerida.
+        De manera que la fase pueda ser manipulada externamente, se usa como referencia el valor de potencia requerido.
+        La fuente de alimentaci\'on para este circuito no est\'a integrada a este m\'odulo.
+    
+        \textbf{Ajuste de velocidad del ventilador}\\
+        El sistema es realizado utilizando el microcontrolador MSP430 para controlar la velocidad del ventilador usando una salida de pwm, según sea solicitado por el control principal.\\
+
+
+    \section{Descripci\'on del circuito}
+    
+    Se usa un triac para poder controlar la pontencia entregada al calefactor alimentado con el voltaje de l\'inea de 120 VAC. El dispositivo a cargo para activar el triac es un MOC3011. Que tiene una corriente de activaci\'on para el LED $I_{FT}$ = 10mA y capaz de tolerar, en sus terminales de salida, hasta $V_{DRM}$ = 250 V. El triac utilizado, BTA16, tiene una corriente RMS en estado encendido $I_{T}$(RMS) = 16 amps a $T_C$ = 25 $^\circ$C. La carga es un alambre de n\'iquel-cromo cubierta con acero inoxidable y rellena con \'oxido de magnesio para tener un aislamiento el\'ectrico (industrialmente denominada resistencia tubular y ampliamente utilizados para la calefacci\'on de aire), que produce temperaturas de hasta 650 $^\circ$C.\\
+
+        \textbf{Aislamiento óptico}\\
+        Para evitar sobretensiones y subidones de corriente, evitar transitorios que puedieran dañar al microcontrolador. Es tambi\'en una interfaz entre el circuito de control y la carga de potencia\\
+
+        \textbf{Alimentación}\\
+        El microcontrolador y los dispositivos electr\'onicos de esta etapa son alimentados por la fuente principal. 3.3V para el microcontrolador y 5V para los perifericos.\\
+
+        \textbf{Detector de cruce por cero}\\
+        El optoacoplador H11AA1 está diseñado para el monitoreo de señales de corriente alterna. Cuando la corriente de entrada supera la $I_F$ = 10mA, uno de los dos ledes infrarrojos enciende y permite la conducción de Colector a Emisor en el fototransistor. El fototransistor NPN está conectado en el colector a una resistencia de pullup para generar una señal invertida; esta señal de salida son los pulsos que indican al microcontrolador cuando un cruce por cero sucede.\\
+
+        \textbf{Activación aislada del Triac}\\
+        Desde el microcontrolador se envía una señal lógica al transistor que sirve como interfaz para el sistema alimentado a 5 V. Cuando se envía un uno lógico la corriente a través del led emisor del MOC3011 es suficiente para encenderlo, se permite el paso de corriente en la compuerta del triac BTA16, activando el estado de conducción.\\
+        
+        \textbf{Ajuste de velocidad del ventilador}\\
+        La salida de pwm se aplica al ventilador a través de un transistor, que realiza la función de interfaz entre los 3.3V del microcontrolador y los 24V que alimentan el ventilador.\\
+
+    \begin{figure}[ht]
+        \centering
+        \includegraphics[scale=0.07]{images/fotos/circuito-msp.jpg}
+        \caption{Esquema del circuito}
+        \label{fig:esquematico}
+    \end{figure}
+
+    \section{Software}
+    \textbf{CONTROL DE FASE}\\
+    Una vez detectado el cruce por cero lo que se hace internamente por software mediante una conversión se calcula el tiempo de espera para activar el triac en modo de conducción.\\
+    El software est\'a escrito en lenguaje C. Este est\'a compuesto de varias funciones, pero las funciones principales necesarias para la operacion apropiada del control de fase reside en: \verb|main()|, \verb|Zero_Cross_Interruption()|, \verb|TA0_ISR()|\\
+    El principio de funcionamiento del TRIAC descrito en la secci\'on \ref{principio-de-funcionamiento} para controlar la resistencia calefactora es ENCENDER el TRIAC exactamente en el mismo tiempo en ambos semiciclos de la onda senoidal. El TRIAC se cierra autom\'aticamente cuando ocurre la detecci\'on del cruce por cero.\\
+    La idea principal del software es sincronizar el temporizador interno del microcontrolador MSP430G2553 con los eventos de cruce por cero generados a partir de la onda senoidal del voltaje de red. El pulso que indica la ocurrencia de el cruce por cero es aplicado en el pin P1.3 el cual est\'a configurado como entrada de interrupci\'on en una configuraci\'on de pull-up.\\
+    
+    \textbf{AJUSTE DE VELOCIDAD DEL VENTILADOR}\\
+    El software tiene 4 niveles de velocidad definidas por el sistema (estoy incluyendo: apagado). Cada nivel es representado por un valor hexadecimal asignados por conveniencia. Cada nivel de velocidad es solicitado por el control principal mediante un dato recibido por comunicación serial. Por ejemplo, si el valor 0x82 es recibido, indica que el sistema debe estar al nivel de velocidad 2. \\ \\
+
+
+        \textbf{Main} \\
+        Despu\'es de que el microcontrolador es encendido o reiniciado, todos los perifericos utilizados (Puertos, Temporizador y UART) son configurados en este funci\'on. Despu\'es todas las variables son inicializadas y el microcontrolador queda en un modo de bajo consumo.
+        \\ \\
+        \begin{figure}[ht]
+            \centering
+            \tcbox[ sharp corners, left=30mm,right=30mm, boxsep=5mm, boxrule=0.3mm, colback=white ]
+                {   \input{ images/flowchart/mainFlowchart.tiz }    }
+            \caption{Diagrama de flujo principal}
+            \label{fig:my_lab}
+        \end{figure}
+
+        \textbf{Interrupci\'on por puertos} \\
+        Cuando el evento de cruce por cero ocurre se genera una interrupci\'on. El funcionamiento de esta interrupci\'on es controlado en este m\'odulo por la rutina de interrupci\'on \verb|__interrupt void Zero_Cross_Interruption(void)| la cual comprueba que suceda una transici\'on de estado alto a estado bajo, en el pin 3 del puerto 1 (P1.3). Este pin es configurado como entrada de interrupci\'on que est\'a configurado como pull up. Al ocurrir la interrupci\'on la variable \verb|ZeroCross_ocurred| es encendida.\\ \\
+
+        La funci\'on de comparaci\'on es entonces sincronizada con el evento de cruce por cero. \\ \\
+
+        \begin{figure}[ht]
+            \centering
+            \tcbox [ sharp corners, left=30mm,right=30mm, boxsep=5mm, boxrule=0.3mm, colback=white ]
+                {   \input{images/flowchart/port1.tiz}    }
+            \caption{flujo int puertos}
+            \label{fig:my_label0}
+        \end{figure}
+
+        \textbf{Interrupci\'on del temporizador} \\
+        El temporizador timerA0 es configurado en modo continuo y realiza la funci\'on de ser el contador principal de tiempo. Esta interrupci\'on es manejada en la rutina de interrupci\'on \verb|TA0_ISR(void)|. Esta rutina genera la base de tiempo de 0.2ms, la activaci\'on del TRIAC. la rutina de verificaci\'on para reiniciar el contador. \\
+
+        La rutina de interrupci\'on \verb|TA0_ISR(void)| es ejecutada cada 0.2 ms.\\
+
+        \begin{figure}[ht]
+            \centering
+            \tcbox[ sharp corners, left=10mm,right=0mm, boxsep=5mm, boxrule=0.3mm, colback=white ]
+            {   \input{images/flowchart/timerA0.tiz}    }
+            \caption{flujo int timer}
+            \label{fig:my_label1}
+        \end{figure}
+    \newpage
+
+    \section{Cálculos}
+    \input{calculos/calculos_03.tex}
+
+    \bibliographystyle{ieeetr}
+    \bibliography{referencias}
+
+\end{document}

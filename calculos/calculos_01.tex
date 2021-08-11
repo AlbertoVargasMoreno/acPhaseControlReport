@@ -1,0 +1,126 @@
+\subsection{Cálculos resistencia de cruce por cero}
+
+    El voltaje máximo a través de las resistencias es 170$V_{p}$ (el valor RMS del voltaje es 120Vac ) por lo tanto, es necesario conectar al menos dos resistencia en serie para evitar sobretensiones.\\
+    
+    Para encender los ledes infrarrojos del H11AA1 hay que satisfacer los requisitos especificados en su hoja de datos. Para superar el valor mínimo de \($I_F$\)min = 10mA.
+    
+    \begin{equation}
+        R_{zc}max
+        =   \frac{ V_{R_{zc}} }{ I_{F}min }
+        =   \frac{ V_{p} - V_{F} }{ I_{F}min }
+        =   \frac{ 120 \sqrt{2}V - 1.2V }{ 10mA }
+        =   16.8505 k\Omega
+    \end{equation}
+    
+    \begin{equation}
+        R_{zc}min
+        =   \frac{ V_{R_{zc}} }{ I_{F}max }
+        =   \frac{ V_{p} - V_{F} }{ I_{F}max }
+        =   \frac{ 120 \sqrt{2}V - 1.2V }{ 50mA }
+        =   3.3 k\Omega
+    \end{equation}
+    
+    Se elige un valor cercano al valor máximo de Resistencia por razones de protección y vida útil del Led emisor.
+    La potencia disipada por la resistencia limitadora está dada por:
+    
+    \begin{equation}
+        P_{R_{zc}}   
+        =   ( V_{R_{zc}} )( I_F ) 
+        =   (  120 \sqrt{2} V - 1.2V )( 10mA )  
+        =   1.6850W
+    \end{equation}
+    
+    En valores éstandar, 16k$\Omega$ a 2W, sería lo ideal. Pero los valores de resistencia a grandes watts son más escasos, lo que nos obliga a hacer un arreglo de resistencias. Con un paralelo de dos resistencias con valor éstandar de 33k obtenemos una resistencia resultante de 16.5k valor que no rebasa el valor máximo de resistencia y cada uno a 1W pues se reparten por igual la corriente entrante recibiendo cada uno 0.8425W.\\
+
+\subsection{Resistencia de entrada al MOC}
+    El MOC3011 consiste de un diodo infrarrojo de arsenurio de galio acoplado ópticamente con un receptor  que maneja  la señal de disparo de un interruptor de alta potencia. Este optoacoplador permite que un circuito de control de baja corriente pueda controlar dispositivos de alta potencia.\\
+    El controlador del triac de potencia es un moc3011. Tiene una corriente de activación del Led $I_FT$ de 10 mA y un voltaje en las terminales de salida en estado apagado $V_{DRM}$ de 250 V. El Triac de potencia utilizado tiene una corriente (RMS) en estado encendido de 16 Amps a $T_{c}$ = 25C. La carga es una resistencia calefactora, de niquel-cromo, con un valor de 18$\Omega$, generando una temperatura máxima de 200C. Este circuito está energizado por dos fuentes de voltaje, el circuito de control por la fuente de 3.3 V y la parte de potencia por el voltaje de línea de 120 Vac. 
+    
+    $V_F$ = 1.5V, $I_{FT}$ = 15mA del MOC3011;  $V_{CE}$ = 0.03V del NPN 2N2222
+    
+    \begin{equation}
+        R_{IN} 
+        =   \frac { V_{CC} - V_{F} - V_{CE} } { I_{FT} }
+        =   \frac { 5V - 1.5V - 0.03V } { 15mA }
+        =   233.33\Omega
+    \end{equation}
+     
+    La potencia de la resistencia
+    
+    \begin{equation}
+        P_{ R_{IN} }
+        =   R \cdot I^2
+        =   (233.33\Omega) \cdot (15mA)^2
+        =   52.4992mW
+    \end{equation}
+    
+    La resistencia de base
+    
+    \begin{equation}
+        R_{B}   
+        =   \frac { Vcc - V_{BE} } { I_{B} }
+        =   \frac { 5V - 0.7V } { 1.5mA }
+        \approx   1.4k\Omega
+    \end{equation}
+    
+    \begin{equation}
+        I_{B}   
+        =   \frac { I_{C} } { hFE }
+        =   \frac { 15mA } { 10 }
+        =   1.5mA
+    \end{equation}
+    
+    \begin{equation}
+        P_{R_{B}}
+        =   R \cdot I^2
+        =   (1.4k\Omega) \cdot (1.5mA)^2
+        =   3.15mW
+    \end{equation}
+    
+    \subsubsection*{La corriente del gate}
+        \begin{equation}
+            R1_{ }   
+            =   \frac { V_{pk} } { I_{max} }    
+            =   \frac { 180V } { 1.2A } = 150\Omega
+        \end{equation}
+        
+        Por lo que elegimos una resistencia, con valor éstandar, de 180 ohm para R1.
+
+\subsection{Cálculo de la resistencia limitadora de la compuerta}
+    Conectar la resistencia entre el microcontrolador y la compuerta del TRIAC es recomendado. Esto limitará la corriente máxima de control proveniente del microcontrolador. Los siguientes parámetros del TRIAC (consultados en la datasheet) deben ser usados para determinar el valor del resistor:\\
+
+    \begin{itemize}
+        \item {
+            \setlength{\parskip}{-1mm}
+            la corriente de activación para la compuerta del TRIAC, el BTA16 tiene 35mA
+            }
+        \item {
+            \setlength{\parskip}{-1mm}
+            La corriente máxima del puerto de salida del controlador, el MSP430 es capaz de altas corrientes de sumidero, siendo el máximo 50 mA, pero el valor recomendado es 20 mA.
+            }
+    \end{itemize}
+
+    La caída de voltaje en la resistencia es de alrededor de 3 V porque el resto del voltaje de alimentación ($V_{CC}$) está en el TRIAC y el microcontrolador. Para asegurar que la compuerta del TRIAC abre bajo cualquier circunstancia, la corriente máxima llendo a través de la resistencia debería ser al menos la misma o mayor que la corriente de activación de compuerta. Por ejemplo, un TRIAC BTA16-600V con una corriente máxima de 40 mA requerirá el siguiente valor de resistencia:\\
+
+    \begin{equation}
+        R = \frac{ V_{MAX} }{ I_{GT} }  =    \frac{3}{0.04} =   75\Omega
+    \end{equation}
+    
+\subsection{Disipación de potencia del TRIAC}
+    Calcular la máxima salida de potencia (carga máxima) es una de las tareas más importantes en este diseño, y la capacidad de potencia depende principalmente del TRIAC que se usa. La capacidad actual del TRIAC limita la máxima salida de potencia. El diseño es versátil, por lo que los diseñadores son capaces de elegir el TRIAC que satisfaga su aplicación.\\
+    
+    el BTA16-600V es un TRIAC de 16 A. El TRIAC es de tipo snubberless, por tanto no necesitan ningún otro circuito de amortiguación como protección. 
+    
+        \subsubsection*{Cómo calcular el tamaño del disipador de calor}
+            El flujo de corriente a través del triac incrementa su temperatura. Si la corriente es muy alta, es necesario usar un disipador de calor. Un cálculo típico para disipador es:\\
+            
+            \begin{equation}
+                I   
+                =   \frac{ P_{LOAD} }{ U_{IN} }  
+                =   \frac{800}{120}    
+                =   6.6666 A
+            \end{equation}
+        
+            donde,\\
+            $P_{LOAD}$ = la potencia máxima de salida en la aplicación ( 800W ), por lo que el flujo de coriene RMS a través del TRIAC para un 1kW es 6.66 A.
+        

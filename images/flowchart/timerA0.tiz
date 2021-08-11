@@ -1,0 +1,56 @@
+\begin{tikzpicture}[%
+    >=triangle 60,              % Nice arrows; your taste may be different
+    start chain=going below,    % General flow is top-to-bottom
+    node distance= 6mm and 60mm, % Global setup of box spacing
+    every join/.style={norm},   % Default linetype for connecting boxes
+    ]
+% ------------------------------------------------- 
+% A few box styles 
+% <on chain> *and* <on grid> reduce the need for manual relative
+% positioning of nodes
+\tikzset{
+  base/.style={draw, on chain, on grid, align=center, minimum height=4ex},
+  proc/.style={base, rectangle, text width=8em},
+  test/.style={base, diamond, aspect=2, text width=5em},
+  term/.style={proc, rounded corners},
+  % coord node style is used for placing corners of connecting lines
+  coord/.style={coordinate, on chain, on grid, node distance=6mm and 25mm},
+  % nmark node style is used for coordinate debugging marks
+  nmark/.style={draw, cyan, circle, font={\sffamily\bfseries}},
+  % -------------------------------------------------
+  % Connector line styles for different parts of the diagram
+  norm/.style={->, draw, black}
+}
+% -------------------------------------------------
+% Start by placing the nodes
+% Use join to connect a node to the previous one 
+\node [term, join] (p0) { TIMER A0 ISR };
+\node [test, join] (t0) {ZC ocurred?};
+\node [test, join] (t1) {is it the time to fire the TRIAC?};
+\node [proc, join] (p1) {Turn OFF TRIAC};
+\node [proc, join]      {counter++};
+\node [proc, join] (p2) {Set next \\ 0.2 ms period};
+\node [term, join]      {RETURN};
+% -------------------------------------------------
+\node [proc, right=of t1] (p3) {Fire TRIAC};
+\node [coord, right=of t1] (c1)  {};  
+\node [coord, node distance=40mm, left=of t0] (c2)  {};
+% All the other connections come out of tests and need annotating
+% First, the straight north-south connections. In each case, we first
+% draw a path with a (consistently positioned) annotation node, then
+% we draw the arrow itself.
+\path (t0.south) to node [near start, xshift=1em] {si} (t1);
+  \draw [->,black] (t0.south) -- (t1);
+\path (t1.south) to node [near start, xshift=1em] {no} (p1);
+  \draw [->,black] (t1.south) -- (p1);
+\path (p3.south) to node [near start, xshift=1em] {} (p1.east); 
+  \draw [->,black] (p3.south) |- (p1.east);
+% -------------------------------------------------
+% Finally, the twisty connectors. Again, we place the annotation
+% first, then draw the connector
+\path (t0.west) to node [near start, yshift=1em] {no} (c2); 
+  \draw [->,black] (t0.west) -- (c2) |- (p2);
+\path (t1.east) to node [near start, yshift=1em] {si} (c1); 
+  \draw [->,black] (t1.east) -- (p3);
+
+\end{tikzpicture}

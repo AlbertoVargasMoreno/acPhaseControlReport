@@ -1,0 +1,214 @@
+\subsection{Cruce por cero}
+
+    Para encender los ledes infrarrojos del H11AA1 hay que satisfacer los requisitos especificados en su hoja de datos. Para superar el valor mínimo de \($I_F$\)min = 10mA.
+    
+    \begin{equation}
+        R_{zc}max
+        =   \frac{ V_{R_{zc}} }{ I_{F}min }
+        =   \frac{ V_{p} - V_{F} }{ I_{F}min }
+        =   \frac{ 120 \sqrt{2}V - 1.2V }{ 10mA }
+        =   16.8505 k\Omega
+    \end{equation}
+    
+    \begin{equation}
+        R_{zc}min
+        =   \frac{ V_{R_{zc}} }{ I_{F}max }
+        =   \frac{ V_{p} - V_{F} }{ I_{F}max }
+        =   \frac{ 120 \sqrt{2}V - 1.2V }{ 50mA }
+        =   3.3 k\Omega
+    \end{equation}
+    
+    Se elige un valor cercano al valor máximo de Resistencia por razones de protección y vida útil del Led emisor.\\
+    
+    La potencia disipada por la resistencia limitadora está dada por:
+    
+    \begin{equation}
+        P_{R_{zc}}   
+        =   ( R_{zc} )( I_F )^2 
+        =   (  16.5K\Omega )( 10mA )  
+        =   1.65W
+    \end{equation}
+    
+    En valores éstandar, 16k$\Omega$ para 2 W, sería lo ideal. Pero la variedad de valores de resistencia de potencia es restringida, como solución se propone un arreglo de resistencias. Con un arreglo paralelo de dos resistencias con valor éstandar de 33k se obtiene un valor resultante de 16.5k$\Omega$; disipando cada una 0.8425W.\\
+
+\subsection{Disparo del Triac y el optoacoplador que le controla}
+    La interfaz para el triac de potencia BTA16 es el MOC3011. Tiene una corriente de activación para el LED $I_{FT}$ de 10 mA y un voltaje de estado apagado en las terminales de salida $V_{DRM}$ de 250 V.\\
+    
+    Se elige un valor para $I_{FT}$ suficiente para activar y mandar la señal de activación al triac BTA16 correctamente, se eligió un valor de 15 mA.\\
+    
+    Para no sacar mucha corriente del microcontrolador puse un transistor para que al recibir un uno lógico se sature, con un simple npn bjt como el 2N2222 es suficiente. El led transmisor del MOC3011 se conecta al colector, haciendo los cálculos para I$_{C}$ = 15mA; y basandonos en su hoja de datos usamos el valor de ganancia hFE = 10.\\
+    
+    $V_F$ = 1.5V, $I_{FT}$ = 15mA del MOC3011;  $V_{CE(sat)}$ = 0.3V del NPN 2N2222
+    
+    \begin{equation}
+        R_{C} 
+        =   \frac { V_{CC} - V_{F} - V_{CE(sat)} } { I_{FT} }
+        =   \frac { 5V - 1.5V - 0.3V } { 15mA }
+        =   213.33\Omega
+    \end{equation}
+     
+    \begin{equation}
+        P_{ R_{C} }
+        =   R_{C} \cdot {I_{F}}^2
+        =   (213.33\Omega) \cdot (15mA)^2
+        =   47.9992mW
+    \end{equation}
+    
+    \begin{center}
+        Un valor éstandar de 330 ohm con tolerancia de 10\%, a 1/4 W es suficiente.\\
+    \end{center}
+    
+    \begin{equation}
+        I_{B}   
+        =   \frac { I_{C} } { hFE }
+        =   \frac { 15mA } { 10 }
+        =   1.5mA
+    \end{equation}
+
+    \begin{equation}
+        R_{B}   
+        =   \frac { Vout - V_{BE(sat)} } { I_{B} }
+        =   \frac { 3.3V - 0.6V } { 1.5mA }
+        =   1.8k\Omega
+    \end{equation}
+    
+    \begin{equation}
+        P_{R_{B}}
+        =   R_{B} \cdot {I_{B}}^2
+        =   (1.4k\Omega) \cdot (1.5mA)^2
+        =   3.15mW
+    \end{equation}
+    
+    \begin{center}
+        Un valor de 2.7K ohm con una tolerancia de 10\%, a 1/4 W.\\
+    \end{center}
+    
+    \subsubsection*{La corriente del gate}
+        \begin{equation}
+            R_{ }min   
+            =   \frac { V_{pk}max } { I_{max} }    
+            =   \frac { 180V } { 1.2A } = 150\Omega
+        \end{equation}
+        
+        Por lo que elegimos una resistencia, con valor éstandar, de 180 ohm para R.
+        
+        Conectar la resistencia entre el microcontrolador y la compuerta del TRIAC es recomendado. Esto limitará la corriente máxima de control proveniente del microcontrolador. Los siguientes parámetros del TRIAC (consultados en la datasheet) deben ser usados para determinar el valor del resistor:\\
+
+        \begin{itemize}
+            \item {
+                \setlength{\parskip}{-1mm}
+                la corriente de activación para la compuerta del TRIAC, el BTA16 tiene 35mA
+                }
+            \item {
+                \setlength{\parskip}{-1mm}
+                La corriente máxima del puerto de salida del controlador, el MSP430 es capaz de altas corrientes de sumidero, siendo el máximo 50 mA, pero el valor recomendado es 20 mA.
+                }
+        \end{itemize}
+        
+    \subsubsection*{Disipación de potencia del TRIAC}
+    Calcular la máxima salida de potencia (carga máxima) es una de las tareas más importantes en este diseño, y la capacidad de potencia depende principalmente del TRIAC que se usa. La capacidad actual del TRIAC limita la máxima salida de potencia. El diseño es versátil, por lo que los diseñadores son capaces de elegir el TRIAC que satisfaga su aplicación.\\
+    
+    el BTA16-600V es un TRIAC de 16 A. El TRIAC es de tipo snubberless, por tanto no necesitan ningún otro circuito de amortiguación como protección. 
+    
+        \subsubsection*{Cómo calcular el tamaño del disipador de calor}
+            El flujo de corriente a través del triac incrementa su temperatura. Si la corriente es muy alta, es necesario usar un disipador de calor. Un cálculo típico para disipador es:\\
+            
+            \begin{equation}
+                I   
+                =   \frac{ P_{LOAD} }{ U_{IN} }  
+                =   \frac{800}{120}    
+                =   6.6666 A
+            \end{equation}
+        
+            donde,\\
+            $P_{LOAD}$ = la potencia máxima de salida en la aplicación ( 800W ), por lo que el flujo de coriene RMS a través del TRIAC para un 1kW es 6.66 A.
+
+        
+\subsection{Ventilador}
+    El ventilador se alimenta a 24 Vdc, por lo que se utliza un transistor que sirve de interruptor controlado por la salida del microcontrolador con un voltaje de 3.3 V. Llevando el transistor de corte a saturación. Aquí también se utiliza un 2N2222, y se realizan los cálculos con I$_{C}$ = I$_{fan}$max = ?? Amps.
+    
+     $V_{CE(sat)}$ = 0.3 V del NPN 2N2222
+    
+    \begin{equation}
+        R_{C} 
+        =   \frac { V_{CC} - V_{fan} - V_{CE(sat)} } { I_{fan} }
+        =   \frac { 24V - 24V - 0.3V } { ??mA }
+        \approx   0 \Omega
+    \end{equation}
+    
+    \begin{center}
+        La caida de voltaje en el ventilador es casi el total de la fuente de alimentación y la caide de voltaje colector-emisor es despreciable, por lo que no es necesario utilizar una resistencia limitadora de corriente para la carga.\\
+    \end{center}
+    
+    \begin{equation}
+        I_{B}   
+        =   \frac { I_{C} } { hFE }
+        =   \frac { ??mA } { 10 }
+        =   ??mA
+    \end{equation}
+
+    \begin{equation}
+        R_{B}   
+        =   \frac { Vout - V_{BE(sat)} } { I_{B} }
+        =   \frac { 3.3V - 0.6V } { ?? mA }
+        =   1.8k\Omega
+    \end{equation}
+    
+    \begin{equation}
+        P_{R_{B}}
+        =   R_{B} \cdot {I_{B}}^2
+        =   (1.4k\Omega) \cdot (1.5mA)^2
+        =   3.15mW
+    \end{equation}
+    
+    \begin{center}
+        Un valor de 2.7K ohm con una tolerancia de 10\%, a 1/4 W.\\
+    \end{center}
+    
+\section{textos con mejor redacción}
+    Transistor como interfaz de salida\cite{texas-calculations}  \\
+    
+    Una interfaz de salida simple para sistemas con suministros mayores a 3 V. La carga del transistor R$_L$ puede ser casi cualquier compoente (por ejemplo, resistencias, ventiladores, embobinados de calefacción, o relevadores). La resisitencia de base R$_B$ puede calcularse con la ecuación:\\
+    
+    P, tolerancia de las resistencias. VOH(min), voltaje minimo de salida alta a -1.5 mA, DVcc -0.25 V.
+    
+    \begin{equation}
+        R_{B} = \frac { R_{L}min \times \beta min \times ( V_{OH(min)} - V_{BE(on)}) }   { (1 + p)\times V_{(sys)}max }
+    \end{equation}
+    
+    \begin{itemize}
+        \item {
+            \setlength{\parskip}{-1mm}
+            RLmin = Resistencia mínima de carga (ohm)
+            }
+        \item {
+            \setlength{\parskip}{-1mm}
+            \betha min = Ganancia mínima del transistor
+            }
+        \item {
+            \setlength{\parskip}{-1mm}
+            V(sys)max = máximo voltaje de alimentación del sistema externo (V)
+            }        
+        \item {
+            \setlength{\parskip}{-1mm}
+            VBE(on) = Voltaje base-emisor para encender (V)
+            }
+    \end{itemize}
+    
+    Debido a el bajo voltaje de salida del puerto en el microcontrolador MSP430, no es necesario una resistencia de la base a 0 V. 
+    
+    \textbf{Ejemplo:} Una carga RL = 100 ohm \pm 3\% es conectada a V(sys) = 5 V \pm 10\%. La tolerancia de la resistencia RB es p = \pm 10 \5. El voltaje de alimentación mínimo en este ejemplo es DVCCmin = 2.7 V (3.0 V - 10 \% ). Las propiedades del transistor son VBE(on) = 0.7 V y hFEmin = 100.
+    
+    \begin{equation}
+        R_B 
+        =   \frac { (100 ohm)(1-0.03) \times 100 \times ( 2.7V - 0.25V - 0.7V ) }   { (1 + 0.1)\times (5V)(1+0.1) }
+        \rightarrow
+        R_B \textless 2805.8 ohm
+    \end{equation}
+            R$_B$ = 2.7 ohm es elegido
+    
+    2N2222: Vceo max = 40 V, Ic max = 600 mA, hFE = 35-100.
+    d
+    
+    \section{frases}
+    se debería seleccionar una resistencia de valor estándar mayor a 311 ohms, por lo que se elige el valor estándar de 330 ohms.

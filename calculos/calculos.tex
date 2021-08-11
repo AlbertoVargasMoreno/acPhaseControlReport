@@ -1,0 +1,112 @@
+\subsection{Cálculos resistencia de cruce por cero}
+    Con el fin de sincronizar la apertura del TRIAC con la entrada de voltaje senoidal en cada medio ciclo, el microcontrolador debe hacer la detección del cruce por cero. Las resistencias R1 y R2 proveen a este un medio de detección. La disipación de potencia en las resistencias con una entrada de voltaje de 120 Vac puede ser calculado de la siguiente forma:
+    
+    \begin{equation}
+        P   =   \frac{ { V_{in}RMS }^2 }{ R1 + R2} = \frac{ {120}^2 }{ 50K }    =   0.1653 W
+    \end{equation}
+    
+    El voltaje máximo a través de las resistencias es 127 V (el valor RMS del voltaje es 120Vac ) por lo tanto, es necesario conectar al menos dos resistencia en serie para evitar sobretensiones.\\
+    
+    Para encender los ledes infrarrojos hay que satisfacer los requisitos especificados en su hoja de datos. Para superar el valor mínimo de \($I_F$\) = 10mA.
+    
+    \begin{equation}
+        R_{F}
+        =   \frac{ V_{p} - V_{F} }{ I_{F} }
+        =   \frac{ (120 \sqrt{2} )V - 1.2V }{ 10mA }
+        =   16.88 k\Omega
+    \end{equation}
+    
+    Para esta aplicación es importante tener en cuenta la potencia para usar los componentes adecuados.
+    
+    \begin{equation}
+        P   =   ( V_p - V_F )( I_F ) =   ( ( 120  \sqrt{2} )V - 1.2V )( 10mA )  =   1.6970W
+    \end{equation}
+    
+    Por lo tanto se eligieron valores comerciales cercanos y se hizo un arreglo para soportar, así armando un arreglo en paralelo:
+    
+    \begin{equation*}
+        33k\Omega a 1W
+    \end{equation*}
+    
+\subsection{Resistencia de entrada al MOC}
+    
+    \begin{equation}
+        R_{IN} 
+        =   \frac { V_{CC} - V_{F} - V_{SAT} } { I_{FT} }
+        =   \frac { 5V - 1.5V - 0.03 } { 15mA }
+        =   233.33\Omega
+    \end{equation}
+    
+    \begin{equation}
+        I_{B}   =   \frac { I_{C} } { hFE }
+    \end{equation}
+    
+    \begin{equation}
+        R_{B}   =   \frac { Vcc - V_{BE} } { I_{B} }    =   1.4k\Omega
+    \end{equation}
+    
+    \subsubsection*{La corriente del gate}
+        \begin{equation}
+            R1_{ }   =   \frac { V_{pk} } { I_{max} }    =   \frac { 180V } { 1.2A } = 150\Omega
+        \end{equation}
+        
+        Por lo que elegimos una resistencia, con valor éstandar, de 180 ohm puede usarse en la práctica para R1
+
+\subsection{Cálculo de la resistencia limitadora de la compuerta}
+    Conectar la resistencia entre el microcontrolador y la compuerta del TRIAC es recomendado. Esto limitará la corriente máxima de control proveniente del microcontrolador. Los siguientes parámetros del TRIAC (consultados en la datasheet) deben ser usados para determinar el valor del resistor:\\
+
+    \begin{itemize}
+        \item {
+            \setlength{\parskip}{-1mm}
+            la corriente de activación de la compuerta del TRIAC, el BTA16 tiene 35mA
+            }
+        \item {
+            \setlength{\parskip}{-1mm}
+            La corriente máxima del puerto de salida del controlador, el MSP430 es capaz de altas corrientes de sumidero, siendo el máximo 50 mA, pero el valor recomendado es 20 mA.
+            }
+    \end{itemize}
+
+    La caída de voltaje en la resistencia es de alrededor de 3 V porque el resto del voltaje de alimentación ($V_{CC}$) está en el TRIAC y el microcontrolador. Para asegurar que la compuerta del TRIAC abre bajo cualquier circunstancia, la corriente máxima llendo a través de la resistencia debería ser al menos la misma o mayor que la corriente de activación de compuerta. Por ejemplo, un TRIAC BTA16-600V con una corriente máxima de 40 mA requerirá el siguiente valor de resistencia:\\
+
+    \begin{equation}
+        R = \frac{ V_{MAX} }{ I_{GT} }  =    \frac{3}{0.04} =   75\Omega
+    \end{equation}
+    
+\subsection{Disipación de potencia del TRIAC}
+    Calcular la máxima salida de potencia (carga máxima) es una de las tareas más importantes en este diseño, y la capacidad de potencia depende principalmente del TRIAC que se usa. La capacidad actual del TRIAC limita la máxima salida de potencia. El diseño es versátil, por lo que los diseñadores son capaces de elegir el TRIAC que satisfaga su aplicación.\\
+    
+    el BTA16-600V es un TRIAC de 16 A. El TRIAC es de tipo snubberless, por tanto no necesitan ningún otro circuito de amortiguación como protección. 
+    
+        \subsubsection*{Cómo calcular el tamaño del disipador de calor}
+            El flujo de corriente a través del triac incrementa su temperatura. Si la corriente es muy alta, es necesario usar un disipador de calor. Un cálculo típico para disipador es:\\
+            
+            \begin{equation}
+                I   =   \frac{P}{ U_{IN} }  =   \frac{1000}{120}    =   4.35 A
+            \end{equation}
+        
+            donde,\\
+            P = la potencia máxima de salida en la aplicación ( 1kW ), por lo que el flujo de coriene RMS a través del TRIAC para un 1kW es ?? A.
+        
+        \subsubsection*{Disipación máxima de potencia}
+            La máxima disipación de potencia n el TRIAC contra la corriente de estado ENCENDIDO (ciclo completo) está descrito en el datasheet. La gráfica muestra que la disipación de potencia en el TRIAC para ?? A de corriente es aproximadamente ?? W.\\
+            
+            Esta potencia se pierde en el Triac, La disipación total de potencia, cuando el disipador de potencia es utilizado, es expresado como:
+            
+            \begin{equation}
+                P   =   \frac{ T_{J} - T_{A} }{ R_{th} + R_{th} + R_{th} }
+            \end{equation}
+            
+            donde,\\
+            \begin{itemize}
+                \item { $T_J$ = máxima temperatura de juntura [\dgC] }
+                \item { $T_A$ = temperatura ambiente [\dgC] }
+                \item { $R_t$ = resistencia termal juntura a carcasa [ \dgC/W ] }
+                \item { $R_{CH}$ = resistencia termal carcasa a disipador [ \dgC/W ] }
+                \item { $R_{HA}$ = resistencia termal disipador a ambiente [ \dgC/W ] }
+            \end{itemize}
+            
+            después de calcular la resistencia termal disipador-ambiente, el disipador correcto puede ser seleccionado por el valor expresado:\\
+            
+            \begin{equation}
+                R_{HA} \leq   \frac{ (T_J - T_A)(R_{JC}-P)(R_{CH}) }{ P } =   14.7^{\circ}C/W
+            \end{equation}
